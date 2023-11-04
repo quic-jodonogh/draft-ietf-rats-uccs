@@ -86,7 +86,7 @@ Table of Contents
    2.  Deployment and Usage of UCCS  . . . . . . . . . . . . . . . .   4
    3.  Characteristics of a Secure Channel . . . . . . . . . . . . .   5
    4.  UCCS and Remote Attestation Procedures (RATS) . . . . . . . .   5
-     4.1.  Evidence Conveyance . . . . . . . . . . . . . . . . . . .   5
+     4.1.  Conceptual Messages Conveyance  . . . . . . . . . . . . .   5
      4.2.  Delegated Attestation . . . . . . . . . . . . . . . . . .   7
      4.3.  Privacy Preservation  . . . . . . . . . . . . . . . . . .   7
    5.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   7
@@ -140,9 +140,8 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
 
    This specification allocates a CBOR tag to mark Unprotected CWT
    Claims Sets (UCCS) as such and discusses conditions for its proper
-   use in the scope of Remote Attestation Procedures (RATS [RFC9334]) in
-   the usage scenario that is the conveyance of Evidence from an
-   Attester to a Verifier.
+   use in the scope of Remote Attestation Procedures (RATS [RFC9334])
+   for the conveyance of RATS Conceptual Messages.
 
    This specification does not change [RFC8392]: A true CWT does not
    make use of the tag allocated here; the UCCS tag is an alternative to
@@ -162,6 +161,7 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
 
    The terms Attester, Attesting Environment, Evidence, Relying Party
    and Verifier are used as in [RFC9334].
+
 
 
 
@@ -266,10 +266,10 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
    This section describes three detailed usage scenarios for UCCS in the
    context of RATS.
 
-4.1.  Evidence Conveyance
+4.1.  Conceptual Messages Conveyance
 
-   For the purposes of this section, the Verifier is the receiver of the
-   UCCS and the Attester is the provider of the UCCS.
+   For the purposes of this section, any RATS role can be the sender or
+   the receiver of the UCCS.
 
    Secure Channels can be transient in nature.  For the purposes of this
    specification, the mechanisms used to establish a Secure Channel are
@@ -282,13 +282,13 @@ Birkholz, et al.           Expires 7 May 2024                   [Page 5]
 Internet-Draft         Unprotected CWT Claims Sets         November 2023
 
 
-   As a minimum requirement in the scope of RATS Claims, the Verifier
-   MUST authenticate the Attester as part of the establishment of the
+   As a minimum requirement in the scope of RATS Claims, the receiver
+   MUST authenticate the sender as part of the establishment of the
    Secure Channel.  Furthermore, the channel MUST provide integrity of
-   the communication from the Attester to the Verifier.  If
-   confidentiality is also required, the receiving side MUST be
-   authenticated as well; this can be achieved if the Verifier and the
-   Attester mutually authenticate when establishing the Secure Channel.
+   the communication between the communicating RATS roles.  If data
+   confidentiality [RFC4949] is also required, the receiving side MUST
+   be authenticated as well; this can be achieved if the sender and
+   receiver mutually authenticate when establishing the Secure Channel.
 
    The extent to which a Secure Channel can provide assurances that UCCS
    originate from a trustworthy Attesting Environment depends on the
@@ -300,13 +300,13 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
    may not provide the assurance required by a Relying Party of the
    authenticity and integrity of the UCCS.
 
-   Ultimately, it is up to the Verifier's policy to determine whether to
-   accept a UCCS from the Attester and to the type of Secure Channel it
+   Ultimately, it is up to the receiver's policy to determine whether to
+   accept a UCCS from the sender and to the type of Secure Channel it
    must negotiate.  While the security considerations of the
    cryptographic algorithms used are similar to COSE, the considerations
    of the Secure Channel should also adhere to the policy configured at
-   each of the Attester and the Verifier.  However, the policy controls
-   and definitions are out of scope for this document.
+   each of end of the Secure Channel.  However, the policy controls and
+   definitions are out of scope for this document.
 
    Where the security assurance required of an Attesting Environment by
    a Relying Party requires it, the Attesting Environment SHOULD be
@@ -315,12 +315,12 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
    approach might be to implement the Attesting Environment in a
    hardened environment such as a TEE [RFC9397] or a TPM [TPM2].
 
-   When UCCS emerge from the Secure Channel and into the Verifier, the
+   When UCCS emerge from the Secure Channel and into the receiver, the
    security properties of the secure channel no longer protect the UCCS,
    which now are subject to the same security properties as any other
-   unprotected data in the Verifier environment.  If the Verifier
+   unprotected data in the Verifier environment.  If the receiver
    subsequently forwards UCCS, they are treated as though they
-   originated within the Verifier.
+   originated within the receiver.
 
    As with EATs nested in other EATs (Section 4.2.18.3 (Nested Tokens)
    of [I-D.ietf-rats-eat]), the Secure Channel does not endorse fully
@@ -355,21 +355,20 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
 
    A Secure Channel which preserves the privacy of the Attester may
    provide security properties equivalent to COSE, but only inside the
-   life-span of the session established.  In general, a Verifier cannot
-   correlate UCCS received in different sessions from the same Attesting
-   Environment based on the cryptographic mechanisms used when a privacy
-   preserving Secure Channel is employed.
+   life-span of the session established.  In general, when a privacy
+   preserving Secure Channel is employed for conveying a conceptual
+   message the receiver cannot correlate the message with the senders of
+   other received UCCS messages.
 
-   In the case of Remote Attestation, the Attester must consider whether
-   any UCCS it returns over a privacy preserving Secure Channel
-   compromises the privacy in unacceptable ways.  As an example, the use
-   of the EAT UEID Claim Section 4.2.1 of [I-D.ietf-rats-eat] in UCCS
-   over a privacy preserving secure channel allows a verifier to
-   correlate UCCS from a single Attesting Environment across many Secure
-   Channel sessions.  This may be acceptable in some use-cases (e.g., if
-   the Attesting Environment is a physical sensor in a factory) and
-   unacceptable in others (e.g., if the Attesting Environment is a user
-   device belonging to a child).
+   An Attester must consider whether any UCCS it returns over a privacy
+   preserving Secure Channel compromises the privacy in unacceptable
+   ways.  As an example, the use of the EAT UEID Claim Section 4.2.1 of
+   [I-D.ietf-rats-eat] in UCCS over a privacy preserving Secure Channel
+   allows a Verifier to correlate UCCS from a single Attesting
+   Environment across many Secure Channel sessions.  This may be
+   acceptable in some use-cases (e.g., if the Attesting Environment is a
+   physical sensor in a factory) and unacceptable in others (e.g., if
+   the Attesting Environment is a user device belonging to a child).
 
 5.  IANA Considerations
 
@@ -386,6 +385,7 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
        +--------+--------------------------+----------------------+
 
                          Table 1: Values for Tags
+
 
 
 
@@ -569,6 +569,10 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
               Technology, DOI 10.6028/nist.sp.800-90ar1, June 2015,
               <https://doi.org/10.6028/nist.sp.800-90ar1>.
 
+   [RFC4949]  Shirey, R., "Internet Security Glossary, Version 2",
+              FYI 36, RFC 4949, DOI 10.17487/RFC4949, August 2007,
+              <https://www.rfc-editor.org/rfc/rfc4949>.
+
    [RFC8446]  Rescorla, E., "The Transport Layer Security (TLS) Protocol
               Version 1.3", RFC 8446, DOI 10.17487/RFC8446, August 2018,
               <https://www.rfc-editor.org/rfc/rfc8446>.
@@ -605,11 +609,7 @@ Appendix A.  CDDL
 
    [RFC8392] does not define CDDL for CWT Claims Sets.
 
-   This specification proposes using the definitions in Figure 1 for the
-   CWT Claims Set defined in [RFC8392].  Note that these definitions
-   have been built such that they also can describe [RFC7519] Claims
-   sets by disabling feature "cbor" and enabling feature "json", but
-   this flexibility is not the subject of the present specification.
+
 
 
 
@@ -617,6 +617,12 @@ Birkholz, et al.           Expires 7 May 2024                  [Page 11]
 
 Internet-Draft         Unprotected CWT Claims Sets         November 2023
 
+
+   This specification proposes using the definitions in Figure 1 for the
+   CWT Claims Set defined in [RFC8392].  Note that these definitions
+   have been built such that they also can describe [RFC7519] Claims
+   sets by disabling feature "cbor" and enabling feature "json", but
+   this flexibility is not the subject of the present specification.
 
    UCCS = #6.601(Claims-Set)
 
@@ -652,6 +658,22 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
    Specifications that define additional Claims should also supply
    additions to the $$Claims-Set-Claims socket, e.g.:
 
+
+
+
+
+
+
+
+
+
+
+
+Birkholz, et al.           Expires 7 May 2024                  [Page 12]
+
+Internet-Draft         Unprotected CWT Claims Sets         November 2023
+
+
    ; [RFC8747]
    $$Claims-Set-Claims //= ( 8: CWT-cnf ) ; cnf
    CWT-cnf = {
@@ -666,13 +688,6 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
 
    ;;; insert CDDL from RFC9052 to complete these CDDL definitions.
    ;# include RFC9052
-
-
-
-Birkholz, et al.           Expires 7 May 2024                  [Page 12]
-
-Internet-Draft         Unprotected CWT Claims Sets         November 2023
-
 
 Appendix B.  Example
 
@@ -706,6 +721,15 @@ Authors' Addresses
    Email: henk.birkholz@sit.fraunhofer.de
 
 
+
+
+
+
+Birkholz, et al.           Expires 7 May 2024                  [Page 13]
+
+Internet-Draft         Unprotected CWT Claims Sets         November 2023
+
+
    Jeremy O'Donoghue
    Qualcomm Technologies Inc.
    279 Farnborough Road
@@ -723,13 +747,6 @@ Authors' Addresses
    Email: ncamwing@cisco.com
 
 
-
-
-Birkholz, et al.           Expires 7 May 2024                  [Page 13]
-
-Internet-Draft         Unprotected CWT Claims Sets         November 2023
-
-
    Carsten Bormann
    Universität Bremen TZI
    Postfach 330440
@@ -737,23 +754,6 @@ Internet-Draft         Unprotected CWT Claims Sets         November 2023
    Germany
    Phone: +49-421-218-63921
    Email: cabo@tzi.org
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
